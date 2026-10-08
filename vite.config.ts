@@ -5,6 +5,6 @@ import react from "@vitejs/plugin-react";
 // works on GitHub Pages under ANY repository name (https://user.github.io/<repo>/).
 // If you ever need an absolute base, set VITE_BASE_PATH (e.g. "/my-repo/") at build time.
 export default defineConfig({
-  base: process.env.VITE_BASE_PATH || "./",
+  base: process.env.VITE_BASE_PATH || "/graduation-vote/",
   plugins: [react()],
 });
