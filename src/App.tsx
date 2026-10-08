@@ -15,7 +15,7 @@ const STEP_NUMBER: Partial<Record<Step, number>> = {
   reasons: 2,
   summary: 3,
 };
-
+// The number of steps in the progress bar is one less than the total number of steps
 export default function App() {
   // A browser that already voted goes straight to the results.
   const [step, setStep] = useState<Step>(() => (hasVoted() ? "results" : "welcome"));
