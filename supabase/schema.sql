@@ -53,3 +53,31 @@ $$;
 
 revoke all on function public.get_vote_stats() from public;
 grant execute on function public.get_vote_stats() to anon, authenticated;
+
+-- 5) Public-safe responses (anonymous) ---------------------------------
+-- Returns only the minimum fields needed to render public participant views.
+-- No ids, no user identifiers, and no raw timestamps are exposed.
+create or replace function public.get_public_vote_responses()
+returns table (
+  selected_concept text,
+  reasons text[],
+  other_reason text
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    v.selected_concept,
+    v.reasons,
+    v.other_reason
+  from public.votes v
+  where coalesce(array_length(v.reasons, 1), 0) > 0
+     or nullif(btrim(coalesce(v.other_reason, '')), '') is not null
+  order by v.created_at desc
+  limit 200;
+$$;
+
+revoke all on function public.get_public_vote_responses() from public;
+grant execute on function public.get_public_vote_responses() to anon, authenticated;

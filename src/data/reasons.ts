@@ -16,4 +16,4 @@ export const reasons: Reason[] = [
 ];
 
 export const reasonLabel = (id: string): string =>
-  reasons.find((r) => r.id === id)?.label ?? id;
+  reasons.find((r) => r.id === id)?.label ?? "سبب إضافي";

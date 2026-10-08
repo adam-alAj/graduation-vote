@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, Loader2, RefreshCw, Share2 } from "lucide-react";
-import { concepts } from "../data/concepts";
+import { conceptById, concepts } from "../data/concepts";
+import { reasonLabel } from "../data/reasons";
 import {
+  fetchPublicResponses,
   fetchStats,
   friendlyError,
   percentages,
+  type PublicVoteResponse,
   voteLabel,
   type VoteStats,
 } from "../lib/voting";
@@ -17,11 +20,15 @@ interface Props {
 
 export function Results({ justVoted }: Props) {
   const [stats, setStats] = useState<VoteStats | null>(null);
+  const [responses, setResponses] = useState<PublicVoteResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingResponses, setLoadingResponses] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [responsesError, setResponsesError] = useState<string | null>(null);
   const [animate, setAnimate] = useState(false);
   const [shareNote, setShareNote] = useState<string | null>(null);
   const hasData = useRef(false);
+  const hasResponsesData = useRef(false);
 
   const load = useCallback(async (silent: boolean) => {
     if (!silent) {
@@ -41,11 +48,34 @@ export function Results({ justVoted }: Props) {
     }
   }, []);
 
+  const loadResponses = useCallback(async (silent: boolean) => {
+    if (!silent) {
+      setLoadingResponses(true);
+      setResponsesError(null);
+    }
+    try {
+      const list = await fetchPublicResponses();
+      setResponses(list);
+      setResponsesError(null);
+      hasResponsesData.current = true;
+    } catch {
+      if (!silent || !hasResponsesData.current) {
+        setResponsesError("تعذر تحميل آراء المشاركين حاليًا.");
+      }
+    } finally {
+      setLoadingResponses(false);
+    }
+  }, []);
+
   useEffect(() => {
     void load(false);
-    const id = setInterval(() => void load(true), POLL_MS);
+    void loadResponses(false);
+    const id = setInterval(() => {
+      void load(true);
+      void loadResponses(true);
+    }, POLL_MS);
     return () => clearInterval(id);
-  }, [load]);
+  }, [load, loadResponses]);
 
   // Let the bars grow from 0 the first time data arrives.
   useEffect(() => {
@@ -164,6 +194,74 @@ export function Results({ justVoted }: Props) {
           <p className="mt-4 text-center text-sm text-amber-700">
             تعذّر تحديث الأرقام الآن، وهذه آخر نتيجة وصلتنا.
           </p>
+        )}
+      </div>
+
+      <div className="surface mt-5 p-5 sm:p-6">
+        <h3 className="text-xl font-extrabold text-slate-900">آراء المشاركين</h3>
+        <p className="mt-1 text-sm text-slate-500">لماذا اختار الناس هذه الأفكار؟</p>
+
+        {loadingResponses && !hasResponsesData.current && (
+          <div className="mt-5 flex items-center justify-center gap-3 rounded-2xl bg-slate-50 px-4 py-6 text-slate-500">
+            <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+            جارٍ تحميل آراء المشاركين...
+          </div>
+        )}
+
+        {responsesError && !hasResponsesData.current && (
+          <div
+            role="status"
+            className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+          >
+            {responsesError}
+          </div>
+        )}
+
+        {!loadingResponses && responses.length === 0 && !responsesError && (
+          <p className="mt-5 rounded-2xl bg-slate-50 px-4 py-6 text-center text-slate-500">
+            لا توجد آراء بعد. كن أول من يشارك رأيه! 💬
+          </p>
+        )}
+
+        {responses.length > 0 && (
+          <ul className="mt-5 space-y-3">
+            {responses.map((response, index) => {
+              const other = response.other_reason?.trim() ?? "";
+              const labels = response.reasons
+                .map((id) => reasonLabel(id))
+                .filter((label) => label.trim().length > 0);
+
+              if (!other && labels.length === 0) return null;
+
+              return (
+                <li
+                  key={`${response.selected_concept}-${index}`}
+                  className="rounded-2xl border border-slate-200 bg-white p-4"
+                >
+                  <p className="text-sm leading-7 text-slate-700">
+                    <span aria-hidden="true">💬 </span>
+                    {other ? (
+                      <span className="font-semibold">&quot;{other}&quot;</span>
+                    ) : (
+                      <span className="font-semibold">اخترت هذا الخيار بسبب: {labels.join(" · ")}</span>
+                    )}
+                  </p>
+
+                  {other && labels.length > 0 && (
+                    <p className="mt-2 text-xs text-slate-500">الأسباب: {labels.join(" · ")}</p>
+                  )}
+
+                  <p className="mt-3 text-sm font-bold text-indigo-700">
+                    {conceptById(response.selected_concept).title}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        {responsesError && hasResponsesData.current && (
+          <p className="mt-4 text-center text-xs text-amber-700">{responsesError}</p>
         )}
       </div>
 

@@ -97,6 +97,12 @@ export interface VoteStats {
   total: number;
 }
 
+export interface PublicVoteResponse {
+  selected_concept: ConceptId;
+  reasons: string[];
+  other_reason: string | null;
+}
+
 export async function fetchStats(): Promise<VoteStats> {
   if (!navigator.onLine) throw new VoteError("offline");
   if (!supabase) throw new VoteError("config");
@@ -108,6 +114,22 @@ export async function fetchStats(): Promise<VoteStats> {
   const a = Number(row?.concept_a ?? 0);
   const b = Number(row?.concept_b ?? 0);
   return { concept_a: a, concept_b: b, total: a + b };
+}
+
+export async function fetchPublicResponses(): Promise<PublicVoteResponse[]> {
+  if (!navigator.onLine) throw new VoteError("offline");
+  if (!supabase) throw new VoteError("config");
+
+  const { data, error } = await withTimeout(supabase.rpc("get_public_vote_responses"));
+  if (error || !Array.isArray(data)) throw new VoteError("network");
+
+  return data
+    .filter((row) => row?.selected_concept === "concept_a" || row?.selected_concept === "concept_b")
+    .map((row) => ({
+      selected_concept: row.selected_concept as ConceptId,
+      reasons: Array.isArray(row.reasons) ? row.reasons.filter((v: unknown) => typeof v === "string") : [],
+      other_reason: typeof row.other_reason === "string" ? row.other_reason : null,
+    }));
 }
 
 /**

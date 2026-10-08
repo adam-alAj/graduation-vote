@@ -24,10 +24,15 @@ export function ReasonSelector({
     <section aria-labelledby="reasons-title" className="mx-auto max-w-2xl">
       <div className="text-center">
         <h2 id="reasons-title" className="text-2xl font-extrabold sm:text-3xl">
-          ليش اخترت هذه الفكرة؟
+          لماذا اخترت هذا الخيار؟
         </h2>
-        <p className="mt-2 text-slate-600">اختيارك مهم، ونحب نعرف شو السبب.</p>
+        <p className="mt-2 text-slate-600">اختر سببًا أو أكثر يعبّر عن رأيك، ويمكنك إضافة تعليقك الخاص.</p>
       </div>
+
+      <p className="surface mt-5 rounded-2xl border-indigo-100 bg-indigo-50/60 p-3.5 text-sm leading-6 text-indigo-900">
+        <strong>ملاحظة:</strong> إجابتك على هذا السؤال ستظهر للزوار الآخرين ضمن آراء المشاركين،
+        بدون اسمك أو أي معلومات شخصية.
+      </p>
 
       <div
         role="group"
@@ -58,7 +63,7 @@ export function ReasonSelector({
 
       <div className="mt-8">
         <label htmlFor="other-reason" className="text-lg font-bold text-slate-900">
-          عندك سبب آخر؟
+          هل تريد إضافة تعليق؟
         </label>
         <textarea
           id="other-reason"
@@ -66,9 +71,10 @@ export function ReasonSelector({
           maxLength={MAX_OTHER}
           rows={4}
           onChange={(e) => onOtherChange(e.target.value)}
-          placeholder="اكتب رأيك هنا... (اختياري)"
+          placeholder="اكتب رأيك أو وضّح سبب اختيارك..."
           className="mt-2 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-base leading-7 placeholder:text-slate-400 focus:border-indigo-500"
         />
+        <p className="mt-2 text-sm text-slate-500">💬 سيظهر تعليقك للزوار الآخرين بشكل مجهول.</p>
         <p className="mt-1 text-end text-xs text-slate-400" aria-hidden="true">
           {otherReason.length} / {MAX_OTHER}
         </p>
